@@ -1,0 +1,12 @@
+services:
+  qrvcard:
+    build:
+      context: ./
+      dockerfile: alpine.Dockerfile
+    container_name: qrvcard
+    hostname: dockerqrvcard
+    ports:
+      - '8803:8803'
+    volumes:
+      - ./:/app
+  

@@ -1,0 +1,28 @@
+<html>
+
+<head>
+
+    <style>
+        #btnDel, #btnCancel{
+            display: none !important;
+        }
+    </style>
+        <link type="text/css" rel="stylesheet" href="./admin/admin.css">
+</head>
+
+<body>
+    <script>
+        var _MODE = "editv";
+        var user = <?php echo json_encode($user) ?>;
+        window.onload = () => {
+            formFill(user);
+        }
+    </script>
+
+    <?php
+    require PUBLIC_PATH . "admin/_form.phtml";
+
+    ?>
+</body>
+
+</html>

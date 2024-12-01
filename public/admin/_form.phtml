@@ -1,0 +1,286 @@
+<?php
+$LOGOS = glob(PUBLIC_PATH . '/logo/*');
+$LOGOS = array_map(function ($el) {
+    return explode('.', basename($el))[0];
+}, $LOGOS);
+
+?>
+<script>
+    var _activeEditItem;
+    let pageBaseUrl = location.protocol + '//' + location.host + location.pathname;
+    let savePath = _MODE == 'editv' ? './editsave.php' : './save.php';
+    let basePath = (_MODE == 'editv' ? '' : '../');
+    var itemQrUrl = "<?= $QRAPI_URL ?>";
+    const USER_FIELDS = <?= json_encode($USER_FIELDS) ?>;
+
+    if (_MODE != 'editv') window.history.replaceState({}, "", pageBaseUrl);
+
+    function showForm(show) {
+        document.getElementById('editform').style.display = show ? "flex" : "none";
+    }
+
+    function clearForm() {
+
+        for (const key in USER_FIELDS) {
+            try {
+                document.getElementById(key).value = "";
+            } catch (_) {
+                console.log(key, _)
+            }
+        }
+    }
+
+    function formFill(item) {
+        document.getElementById('editform').onchange = (e, d) => {
+            const reader = new FileReader();
+            reader.onload = (args) => {
+                if (typeof args?.target?.result === 'string') {
+                    document.getElementById("userImage").setAttribute("src", args.target.result);;
+                }
+            };
+            reader.readAsDataURL(e.target.files[0]); //NOT: convert to base64 string
+        }
+
+        if (item) {
+            _activeEditItem = item;
+            for (const key in USER_FIELDS) {
+
+                const val = item[key];
+                try {
+                    document.getElementById(key).value = val;
+                } catch (_) {
+                    console.log(key, val, _)
+                }
+            }
+            const uCode = item["id"] + "_" + item['rand'];
+            const imgUrl = basePath + "_uploads/" + uCode+".jpg";
+            document.getElementById("infoBox").style.display = "block";
+            document.getElementById("userImage").setAttribute("src", imgUrl);
+            document.getElementById("vcardLink").setAttribute("href", basePath + "?" + uCode);
+
+        } else {
+            document.getElementById("userImage").setAttribute("src", "");
+            document.getElementById("infoBox").style.display = "none";
+            clearForm();
+        }
+        document.getElementById('btnDel').style.display = item ? "block" : "none";
+
+        changeTitle(item ? item["name"] + " Düzenle" : " Yeni Ekle");
+        showForm(true);
+        try {
+            document.getElementById('statusBar').style.display = "none";
+        } catch (error) {}
+        window.scrollTo(400, 0);
+
+    }
+
+    function deleteIMG() {
+        _activeEditItem["_img"] = -1;
+        document.getElementById("userImage").setAttribute("src", "");
+    }
+
+    function saveForm(e) {
+        update();
+        // e.preventDefault();
+        return false;
+
+    }
+
+
+    async function deleteItem(item) {
+        if (!confirm("Emin misiniz?")) return;
+        const fd = new FormData();
+        if (!_activeEditItem || !_activeEditItem["id"])
+            return false;
+        fd.append("id", _activeEditItem["id"]);
+        fd.append("_action", "delete")
+
+
+        let text = "-1";
+        try {
+            const res = await fetch(savePath, {
+                method: "POST",
+                body: fd,
+            })
+            text = await res.text();
+        } catch (err) {
+            showStatus("error", 'sistem hata' + err.message)
+        }
+
+        if (text > 0) {
+            showStatus("success", 'Kayıt Başarılı:' + text)
+        } else {
+            showStatus("error", 'Hata Oluştu:' + text)
+        }
+    }
+
+
+
+
+    async function update() {
+
+        const fd = new FormData();
+
+        for (const key in USER_FIELDS) {
+            try {
+
+                let inpVal = null;
+                if (key == "img") {
+                    img = document.getElementById('img').files[0] ?? undefined;
+                    if (img)
+                        fd.append('img', img, img.name);
+                    if (_activeEditItem["_img"])
+                        fd.append("_img", _activeEditItem["_img"]);
+
+
+                } else {
+                    inpVal = document.getElementById(key).value ?? undefined;
+                    if (inpVal != undefined)
+                        fd.append(key, inpVal);
+                }
+            } catch (e) {
+                console.log(key, e)
+            }
+        }
+        if (_activeEditItem && _activeEditItem["id"] ) {
+            fd.append("id", _activeEditItem["id"]);
+            fd.append("rand", _activeEditItem["rand"] ?? "");
+        }
+        let text = "-1";
+        try {
+            const res = await fetch(savePath, {
+                method: "POST",
+                body: fd,
+            })
+            text = await res.text();
+        } catch (err) {
+            showStatus("error", 'sistem hata:' + err.message)
+        }
+
+
+        if (text > 0) {
+            showStatus("success", 'Kayıt Başarılı:' + text);
+            if (_MODE != 'editv') setTimeout(() => {
+               // window.location.href = "";
+            }, 2000);
+        } else {
+            showStatus("error", 'Hata Oluştu:' + text)
+        }
+
+
+
+    }
+
+    function showStatus(code, msg) {
+
+        const statusbar = document.getElementById('statusBar');
+        statusbar.style.display = "block";
+        statusbar.innerText = msg;
+        statusbar.style.backgroundColor = code == 'success' ? "#5F5" : code == 'error' ? "#F55" : "#55F";
+        setTimeout(() => {
+            statusbar.style.display = "none";
+        }, 3000);
+    }
+
+    function changeTitle(title) {
+        document.getElementById('pageTitle').innerText = title;
+    }
+</script>
+
+
+<form class="form-container" id="editform" onsubmit="event.preventDefault(); return saveForm(event);" style="display: none;flex-direction: row;">
+    <!-- <form class="form-container" id="editform" style="display: none;"> -->
+    <div>
+        <h2 id="pageTitle"></h2>
+        <div class="form-row">
+            <div class="input-field">
+                <input type="text" id="name" required placeholder=" " />
+                <label for="name">Username</label>
+                <div class="bar"></div>
+            </div>
+            <div class="input-field">
+                <input type="text" id="job" required placeholder=" " />
+                <label for="job">Job</label>
+                <div class="bar"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="input-field">
+                <input type="tel" id="tel" required placeholder=" " pattern="[0-9]{11}" />
+                <label for="tel">Telefon</label>
+                <div class="bar"></div>
+            </div>
+            <div class="input-field">
+                <input type="email" id="email" required placeholder=" " />
+                <label for="email">Email</label>
+                <div class="bar"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="input-field">
+                <input type="text" id="company" placeholder=" " />
+                <label for="company">Company</label>
+                <div class="bar"></div>
+            </div>
+            <div class="input-field">
+                <input type="text" id="website" placeholder=" " />
+                <label for="website">Website</label>
+                <div class="bar"></div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="input-field" style="width: 620px;">
+                <input type="text" id="note" placeholder=" " />
+
+                <label for="note">Note</label>
+                <div class="bar"></div>
+            </div>
+        </div>
+
+        <div class="form-row">
+
+            <div class="input-field">
+                <input type="date" id="note_date" placeholder=" " />
+                <label for="note_date">Note Date</label>
+                <div class="bar"></div>
+            </div>
+            <div class="input-field">
+                <select id="logo">
+                    <option value="">Yok</option>
+                    <?php
+                    foreach ($LOGOS as $key => $value) {
+                        echo "<option>$value</option>";
+                    }
+                    ?>
+                </select>
+                <!-- <input type="text" id="logo" placeholder=" " /> -->
+                <label for="logo">Logo</label>
+                <div class="bar"></div>
+            </div>
+        </div>
+        <div class="input-field">
+            Profil Resmi
+            <input type="file" name="image" id="img" accept="image/png, image/jpeg" />
+        </div>
+        <div class="form-row">
+            <div class="input-field" style="width: 620px;">
+                <input type="text" id="passw" placeholder=" " disabled />
+                <label for="passw">Düzenleme kodu</label>
+                <div class="bar"></div>
+            </div>
+        </div>
+        <div class="button-field">
+            <button type="submit"><span>Kaydet</span></button>
+            <button type="button" id="btnDel" onclick="deleteItem()"><span>Sil</span></button>
+            <button type="button" id="btnCancel" onclick="showForm(false)"><span>İptal</span></button>
+        </div>
+        <h2 id="statusBar" style="padding:10px;"></h2>
+    </div>
+    <div id="infoBox" style="display: none;">
+        <a id="vcardLink" target="_blank">Profili Gör</a>
+        <img id="userImage" alt="" />
+        <div class="button-field">
+            <button type="button" onclick="deleteIMG()"><span>Resmi Kaldır</span></button>
+        </div>
+    </div>
+</form>

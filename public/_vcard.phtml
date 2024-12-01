@@ -1,0 +1,230 @@
+<?php
+
+$user['img'] = "./_uploads/" . $user["id"] . "_" . $user["rand"] . ".jpg";
+$user['img_full'] = HOST_URL . ltrim($user['img'], '.');
+
+
+if (!strlen($user["company"]) > 0)
+    $user["company"] = $PORTAL_COMPANY;
+
+if (!strlen($user["website"]) > 0)
+    $user["website"] = $PORTAL_HOST;
+
+$logo_url = "./logo/" . $user['logo'] . ".png";
+if (!is_file($logo_url)) $logo_url = null;
+
+$user['logo_qr'] = "./logo/" . $user['logo'] . "_qr.png";
+qwput(($user['logo_qr']));
+if (!is_file($user['logo_qr'])) $user['logo_qr'] = $logo_url;
+$user['logo'] = $logo_url;
+
+
+if (strlen($user["note_date"]) > 5 && strtotime($user["note_date"]) < time())
+    $user["note"] = null;
+
+
+$actual_link =  HOST_URL . "$_SERVER[REQUEST_URI]";
+?>
+
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type " content="text/html; charset =utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
+    <link rel=" shortcut icon" href="./icons/favicon.ico" type="image/x-icon" />
+    <link rel=" shortcut icon" href="./icons/favicon.png" />
+    <title><?= $user['name'] ?> - <?= $user['company'] ?></title>
+    <meta name="description" content="<?= $user['job'] ?> - <?= $user['company'] ?> " />
+    <meta property="og:description" content="<?= $user['job'] ?> - <?= $user['company'] ?>" />
+    <meta property="og:title" content="<?= $user['name'] ?> - <?= $user['company'] ?>" />
+    <meta property="og:url" content="<?= $actual_link ?>" />
+    <meta property="og:image" content="<?= $user['img_full'] ?>" />
+    <link rel="image_src" type="image/jpeg" href="<?= $user['img_full'] ?>" />
+    <meta property="og:type" content="website" />
+    <link type="text/css" rel="stylesheet" href="vcard.css?3">
+
+
+</head>
+
+<body>
+    <script type="text/javascript">
+        var user = <?php echo json_encode($user) ?>;
+        var itemQrUrl = "<?= $PORTAL_URL ?>?" + user.id + '_' + user.rand;
+        var creating = false;
+
+        document.addEventListener("scroll", async (event) => {
+            // https://qr-code-styling.com/
+            const qrImage = document.getElementById("qrImage");
+            if (creating) return;
+            creating = true;
+            const qrCode = new QRCodeStyling({
+                width: 500,
+                height: 500,
+                type: "canvas",
+                data: itemQrUrl,
+                image: user.logo_qr,
+                margin: 30,
+                dotsOptions: {
+                    color: "#060606",
+                    //type: "rounded"
+                },
+                backgroundOptions: {
+                    color: "#e9ebee",
+                },
+                imageOptions: {
+                    crossOrigin: "anonymous",
+                    margin: 5
+                }
+            });
+
+
+
+            await qrCode._canvasDrawingPromise; // canvasın çizilmesini bekle
+            const canvas = qrCode._canvas;
+            const ctx = canvas.getContext("2d");
+            const x = canvas.width / 2;
+            const y = canvas.height - 8;
+
+            ctx.textAlign = "center";
+            ctx.baseAlign = "top";
+            ctx.font = "22px Roboto";
+            ctx.fillText(user.name, x, y);
+            qrImage.append(canvas);
+            qrImage.style.display = "block";
+
+            const link = document.createElement("button");
+            link.href = "#"
+            link.innerText = "Download QR"
+            link.className = "qr_download"
+            qrImage.append(link);
+            link.addEventListener('click', (event) => {
+        
+                qrCode.download({
+                    name: 'qr_' + user.id + '_' + user.name,
+                    extension: 'png'
+                })
+            })
+        })
+
+
+        async function fetchToB64(url) {
+            var res = await fetch(url)
+            var blob = await res.blob()
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onloadend = () => resolve(reader.result)
+                reader.onerror = reject
+                reader.readAsDataURL(blob)
+            })
+        }
+
+        async function vcard() {
+            user['name'] = user['name'].trim();
+            const uu = user['name'].split(' ');
+            if (uu.length < 2) user['FN'] = user['name'], user['LN'] = '';
+            else {
+                user['LN'] = uu[uu.length - 1];
+                user['FN'] = user['LN'] ? user['name'].replace(user['LN'], '').trim() : user['name'];
+            }
+            var vcard = "BEGIN:VCARD\n";
+            vcard += "N;CHARSET=UTF-8:" + user['LN'] + ';' + user['FN'] + "\n";
+            vcard += "FN;CHARSET=UTF-8:" + user['FN'] + ' ' + user['LN'] + "\n";
+            vcard += "TEL;TYPE=CELL:+9" + user['tel'] + "\n";
+            vcard += "EMAIL;TYPE=WORK:" + user['email'] + "\n";
+            vcard += "ORG;CHARSET=UTF-8:" + user['job'] + " - " + user['company'] + "\n";
+            if (user["note"])
+                vcard += "NOTE;CHARSET=UTF-8:" + user['note'] + "\n";
+
+
+            if (user['img']) {
+                var img = await fetchToB64(user['img'])
+                img = img.split(',')[1];
+                vcard += "PHOTO;ENCODING=BASE64;TYPE=JPG:" + img + "\n";
+            }
+
+            vcard += "END:VCARD"
+
+
+            var a = document.createElement('a')
+            a.download = user['name'] + ".vcf"
+            a.textContent = user['name']
+            var blob = new Blob([vcard], {
+                "type": "text/x-vcard"
+            })
+            a.href = URL.createObjectURL(blob)
+            a.click();
+
+        }
+    </script>
+
+
+    <div class="bg_top"></div>
+    <div class="container">
+        <div class="user_box">
+            <div class="user_top">
+                <div class="user_img" style="  background-image: url(<?= $user['img'] ?? "./user/img/unkown.jpg" ?>);"></div>
+                <p class="ulabel uname"><?= $user['name'] ?></p>
+                <p class="ulabel job"><?= $user['job'] ?> - <?= $user['company'] ?></p>
+                <?php if (strlen($user["logo"]) > 0) { ?>
+                    <img src="<?= $user['logo'] ?>" alt="" style="object-fit: contain;height:50px;position:absolute;bottom:75px" />
+                <?php } ?>
+                <div class="buttons">
+                    <a class="btn_mail" href="mailto:<?= $user['email'] ?>">
+                        <p class="text">EMAIL</p>
+                    </a>
+                    <a class="btn_call" href="tel:+9<?= $user['tel'] ?>">
+                        <p class="text">CALL</p>
+                    </a>
+                    <a class="btn_whatsapp" href="https://api.whatsapp.com/send?phone=9<?= $user['tel'] ?>" target="_blank">
+                        <p class="text">WHATSAPP</p>
+                    </a>
+
+                </div>
+
+            </div>
+            <div class="user_bottom">
+
+
+                <div class="row">
+                    <div class="icon call"></div><a href="tel:+9<?= $user['tel'] ?>">+9<?= $user['tel'] ?></a>
+                    <p>Phone</p>
+                    <div class="street"></div>
+                </div>
+                <div class="row">
+                    <div class="street"></div>
+                    <div class="icon mail"></div><a href="mailto:<?= $user['email'] ?>"><?= $user['email'] ?></a>
+                    <p>Email</p>
+                </div>
+                <div class="row">
+                    <div class="street"></div>
+                    <div class="icon web"></div>
+                    <a href="https://<?= $user['website'] ?>" target="_blank"><?= $user['website'] ?></a>
+                    <p>Website</p>
+                </div>
+                <div class="row">
+                    <div class="street"></div>
+                    <div class="icon job"></div>
+                    <a> <?= $user['company'] ?></a>
+                    <p><?= $user['job'] ?></p>
+                </div>
+                <?php if (isset($user["note"]) && strlen($user["note"]) > 0) { ?>
+                    <div class="row">
+                        <div class="street"></div>
+                        <div class="icon job"></div>
+                        <a><?= $user["note"] ?></a>
+                        <p></p>
+                    </div>
+                <?php } ?>
+                <a class="btn_add" onclick="vcard()">Add Contact</a>
+                <div id="qrImage" alt="" style="object-fit: contain;max-width:600px; object-position: top; 
+                 height:600px;margin:20px auto;"></div>
+            </div>
+        </div>
+    </div>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-08DKJ7ZRN8"></script>
+    <script type="text/javascript" src="./qr-code-styling.js"></script>
+
+</body>
+
+</html>

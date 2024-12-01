@@ -1,0 +1,236 @@
+.styled-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+.styled-table thead tr {
+  background-color: #007859;
+  color: #ffffff;
+  text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+}
+.styled-table tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.styled-table tbody tr:last-of-type {
+  border-bottom: 2px solid #009879;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #75c879 !important;
+  box-shadow: 0px 9px 4px -6px grey !important;
+}
+
+#infoBox a {
+  margin-top: 15px;
+  display: block;
+}
+#infoBox #userImage {
+  object-fit: contain;
+  max-width: 400px;
+  object-position: top;
+  height: 400px;
+  margin: 20px auto;
+}
+
+.form-container {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.form-row {
+  display: flex;
+}
+
+.input-field {
+  position: relative;
+  margin: 10px 10px;
+  width: 300px;
+}
+
+.input-field input,
+.input-field select,
+.input-field textarea {
+  outline: none;
+  z-index: 1;
+  position: relative;
+  background: none;
+  width: 100%;
+  height: 45px;
+  border: 0;
+  color: #111;
+  font-size: 16px;
+  font-weight: 300;
+}
+
+.input-field input:focus ~ .bar:before,
+.input-field input:focus ~ .bar:after,
+.input-field select:focus ~ .bar:before,
+.input-field select:focus ~ .bar:after,
+.input-field textarea:focus ~ .bar:before,
+.input-field textarea:focus ~ .bar:before {
+  width: 50%;
+  background-color: #000;
+}
+
+.input-field input:focus ~ label,
+.input-field input:not(:placeholder-shown) ~ label,
+.input-field select:focus ~ label,
+.input-field select:not(:placeholder-shown) ~ label,
+.input-field textarea:focus ~ label,
+.input-field textarea:not(:placeholder-shown) ~ label {
+  color: #888;
+  transform: translate(-12%, -60%) scale(0.75);
+}
+
+.input-field label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #757575;
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 60px;
+  transition: 0.2s ease;
+}
+
+.input-field .bar {
+  position: absolute;
+  left: 0;
+  bottom: 5px;
+  background: #777;
+  width: 100%;
+  height: 1px;
+}
+
+.input-field .bar:before,
+.input-field .bar:after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  transition: 0.3s ease;
+}
+
+.input-field .bar:before {
+  left: 50%;
+}
+
+.input-field .bar:after {
+  right: 50%;
+}
+
+.input-field input:invalid:not(:placeholder-shown) ~ .bar:before,
+.input-field input:invalid:not(:placeholder-shown) ~ .bar:after {
+  background-color: #d66;
+  width: 50%;
+}
+
+.input-field input:valid:not(:placeholder-shown) ~ .bar:before,
+.input-field input:valid:not(:placeholder-shown) ~ .bar:after {
+  background-color: #8d8;
+  width: 50%;
+}
+
+/* .input-field input:not(:valid)~.bar:before ,.input-field input:not(:valid)~.bar:after {
+    background-color: #D88;
+    width: 50%;
+
+} */
+.button-field {
+  display: flex;
+}
+
+.button-field button {
+  outline: 0;
+  cursor: pointer;
+  position: relative;
+
+  background: 0;
+  margin: 0 10px;
+  width: 80px;
+
+  border: 2px solid #888;
+  border-radius: 5px;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+  overflow: hidden;
+  transition: 0.3s ease;
+}
+
+.button-field button span {
+  position: relative;
+  z-index: 1;
+  color: #888;
+  transition: 0.3s ease;
+}
+
+.button-field button:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  background: #009879;
+  width: 30px;
+  height: 30px;
+  border-radius: 100%;
+  margin: -15px 0 0 -15px;
+  opacity: 0;
+  transition: 0.3s ease;
+}
+
+.button-field button:hover,
+.button-field button:active,
+.button-field button:focus {
+  border-color: #009879;
+}
+
+.button-field button:hover span,
+.button-field button:active span,
+.button-field button:focus span {
+  color: #009879;
+}
+
+.button-field button:active span,
+.button-field button:focus span {
+  color: #ffffff;
+}
+
+.button-field button:active:before,
+.button-field button:focus:before {
+  opacity: 1;
+  transform: scale(10);
+}
+
+@-webkit-keyframes buttonFadeInUp {
+  0% {
+    bottom: 30px;
+    opacity: 0;
+  }
+}
+
+@keyframes buttonFadeInUp {
+  0% {
+    bottom: 30px;
+    opacity: 0;
+  }
+}
